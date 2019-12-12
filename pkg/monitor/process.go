@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"os"
 	"strings"
 	"time"
 
@@ -54,6 +55,8 @@ func (p *Process) start() {
 	p.cmd = cmd.NewCmdOptions(cmd.Options{
 		Streaming: true,
 	}, p.Path, p.Args...)
+
+	p.cmd.Env = os.Environ()
 
 	go func() {
 		for line := range p.cmd.Stdout {
