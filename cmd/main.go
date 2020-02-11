@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/okteto/supervisor/pkg/monitor"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/okteto/supervisor/pkg/monitor"
+	log "github.com/sirupsen/logrus"
 )
 
 // CommitString is the commit used to build the server
@@ -31,7 +32,16 @@ func main() {
 	m.Add(monitor.NewProcess(
 		"syncthing",
 		"/var/okteto/bin/syncthing",
-		[]string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose"}),
+		[]string{
+			"-home",
+			"/var/syncthing",
+			"-gui-address",
+			"0.0.0.0:8384",
+			"-verbose",
+			"-audit",
+			"-auditfile",
+			"-",
+		}),
 	)
 
 	if *remoteFlag {
