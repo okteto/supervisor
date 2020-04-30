@@ -10,6 +10,6 @@ build:
 lint:
 	golangci-lint run
 
-.PHONY: publish
-publish:
-	okteto build -t okteto/supervisor:0.1.0 .
+.PHONY: push
+push:
+	okteto build -t okteto/supervisor:0.1.1 .

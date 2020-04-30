@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/okteto/supervisor/pkg/monitor"
-	log "github.com/sirupsen/logrus"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/okteto/supervisor/pkg/monitor"
+	reaper "github.com/ramr/go-reaper"
+	log "github.com/sirupsen/logrus"
 )
 
 // CommitString is the commit used to build the server
@@ -15,6 +17,9 @@ var CommitString string
 
 func main() {
 	log.WithField("commit", CommitString).Infof("supervisor started")
+
+	//  Start background reaping of orphaned child processes.
+	reaper.Reap()
 
 	remoteFlag := flag.Bool("remote", false, "start the remote server")
 	flag.Parse()
