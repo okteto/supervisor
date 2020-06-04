@@ -1,6 +1,6 @@
 module github.com/okteto/supervisor
 
-go 1.13
+go 1.14
 
 require (
 	github.com/go-cmd/cmd v1.1.0
