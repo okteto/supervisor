@@ -1,4 +1,4 @@
-FROM golang:1.13 as builder
+FROM golang:1.14-buster as builder
 
 WORKDIR /app
 
@@ -9,12 +9,11 @@ RUN go mod download
 COPY Makefile /app
 COPY pkg /app/pkg
 COPY cmd /app/cmd
-COPY .git /app/.git
+ARG COMMIT_SHA
 
-RUN git rev-parse --short HEAD
 RUN make
 
-FROM alpine
+FROM busybox
 
 COPY --from=builder /app/supervisor /usr/local/bin/supervisor
 RUN chmod +x /usr/local/bin/supervisor
