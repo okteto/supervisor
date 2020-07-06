@@ -66,7 +66,7 @@ func (p *Process) start() {
 
 	go func() {
 		for line := range p.cmd.Stderr {
-			p.logger.Error(line)
+			p.logger.Info(line)
 		}
 	}()
 
