@@ -40,7 +40,7 @@ func main() {
 	)
 
 	if *remoteFlag {
-		m.Add(monitor.NewProcess("remote", "/var/okteto/bin/remote", nil))
+		m.Add(monitor.NewProcess("remote", "/var/okteto/bin/okteto-remote", nil))
 	}
 
 	log.Info("starting monitor")
