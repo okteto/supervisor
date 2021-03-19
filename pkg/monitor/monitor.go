@@ -76,6 +76,8 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 			return
 		}
 
+		p.killAllByName()
+
 		log.Infof("Restarting process %s", p.Name)
 		p.start()
 	case fatal:
@@ -83,6 +85,8 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 			m.err <- fmt.Errorf("%s started %d times", p.Name, p.startCount)
 			return
 		}
+
+		p.killAllByName()
 
 		log.Errorf("Restarting process %s after failure", p.Name)
 		p.start()
