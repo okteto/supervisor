@@ -1,11 +1,13 @@
 package monitor
 
 import (
+	"io"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/go-cmd/cmd"
+	"github.com/shirou/gopsutil/process"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -150,4 +152,89 @@ func (p *Process) stop() {
 	p.logger.Info("process stopped")
 	p.state = stopped
 	p.cmd = nil
+}
+
+func (p *Process) killAllByName() {
+	p.logger.Infof("killing process %s", p.Name)
+
+	procList, err := process.Processes()
+	if err != nil {
+		p.logger.WithError(err).Error("failed to call process.Processes")
+		return
+	}
+
+	for _, proc := range procList {
+		if proc.Pid == 0 {
+			continue
+		}
+
+		name, err := proc.Name()
+		if err != nil {
+			// it's expected go get EOF if the process no longer exists at this point.
+			if err != io.EOF {
+				log.Infof("error getting name for process %d: %s", proc.Pid, err.Error())
+			}
+			continue
+		}
+
+		if name == "" {
+			continue
+		}
+
+		if !strings.Contains(name, p.Name) {
+			continue
+		}
+
+		log.Infof("terminating process %s with pid %d...", p.Name, proc.Pid)
+		if err := terminate(proc); err != nil {
+			log.Infof("error terminating process %s with pid %d: %s", p.Name, proc.Pid, err.Error())
+		}
+		log.Infof("terminated process %s with pid %d", proc.Pid)
+	}
+
+	p.logger.Infof("process %s killed", p.Name)
+}
+
+func terminate(p *process.Process) error {
+	if err := p.Terminate(); err != nil {
+		return err
+	}
+
+	notRunning, err := waitUntilNotRunning(p)
+	if err != nil {
+		return err
+	}
+
+	if notRunning {
+		return nil
+	}
+
+	if err := p.Kill(); err != nil {
+		return err
+	}
+
+	_, err = waitUntilNotRunning(p)
+	return err
+}
+
+func waitUntilNotRunning(p *process.Process) (bool, error) {
+	isRunning, err := p.IsRunning()
+	if err != nil {
+		return false, err
+	}
+
+	tick := time.NewTicker(10 * time.Millisecond)
+
+	for i := 0; i < 300; i++ {
+		if !isRunning {
+			return true, nil
+		}
+		<-tick.C
+		isRunning, err = p.IsRunning()
+		if err != nil {
+			return false, err
+		}
+	}
+
+	return false, nil
 }
