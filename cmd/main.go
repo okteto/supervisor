@@ -22,6 +22,7 @@ func main() {
 	reaper.Reap()
 
 	remoteFlag := flag.Bool("remote", false, "start the remote server")
+	resetFlag := flag.Bool("reset", false, "reset syncthing database")
 	flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -33,10 +34,14 @@ func main() {
 	}()
 
 	m := monitor.NewMonitor(ctx)
+	reset := "-reset-deltas"
+	if *resetFlag {
+		reset = "-reset"
+	}
 	m.Add(monitor.NewProcess(
 		"syncthing",
 		"/var/okteto/bin/syncthing",
-		[]string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose"}),
+		[]string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose", reset}),
 	)
 
 	if *remoteFlag {
