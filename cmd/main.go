@@ -36,7 +36,7 @@ func main() {
 	m := monitor.NewMonitor(ctx)
 	reset := "-reset-deltas"
 	if *resetFlag {
-		reset = "-reset"
+		reset = "-reset-database"
 	}
 	m.Add(monitor.NewProcess(
 		"syncthing",
