@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -33,15 +34,19 @@ func main() {
 		cancel()
 	}()
 
-	m := monitor.NewMonitor(ctx)
-	reset := "-reset-deltas"
 	if *resetFlag {
-		reset = "-reset-database"
+		cmd := exec.Command("/var/okteto/bin/syncthing", "-home", "/var/syncthing", "-reset-database")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			log.WithError(err).Errorf("error resetting syncthing database: %s", output)
+		}
 	}
+
+	m := monitor.NewMonitor(ctx)
 	m.Add(monitor.NewProcess(
 		"syncthing",
 		"/var/okteto/bin/syncthing",
-		[]string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose", reset}),
+		[]string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose", "-reset-deltas"}),
 	)
 
 	if *remoteFlag {
