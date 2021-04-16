@@ -20,6 +20,8 @@ const (
 	stopping     state = "stopping"
 	stopped      state = "stopped"
 	fatal        state = "fatal"
+	//SyncthingBin path of the syncthing binary
+	SyncthingBin = "/var/okteto/bin/syncthing"
 )
 
 // Process is process monitored
