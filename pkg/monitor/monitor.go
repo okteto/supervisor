@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -87,6 +88,17 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 		}
 
 		p.killAllByName()
+
+		if p.Path == SyncthingBin {
+			log.Info("Resetting syncthing database after error...")
+			cmd := exec.Command(SyncthingBin, "-home", "/var/syncthing", "-reset-database")
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				log.WithError(err).Errorf("error resetting syncthing database: %s", output)
+			} else {
+				log.Infof("syncthing database reset: %s", output)
+			}
+		}
 
 		log.Errorf("Restarting process %s after failure", p.Name)
 		p.start()
