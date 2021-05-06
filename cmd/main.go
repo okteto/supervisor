@@ -24,6 +24,7 @@ func main() {
 
 	remoteFlag := flag.Bool("remote", false, "start the remote server")
 	resetFlag := flag.Bool("reset", false, "reset syncthing database")
+	verboseFlag := flag.Bool("verbose", true, "syncthing verbosity")
 	flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -43,11 +44,12 @@ func main() {
 	}
 
 	m := monitor.NewMonitor(ctx)
-	m.Add(monitor.NewProcess(
-		"syncthing",
-		monitor.SyncthingBin,
-		[]string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose"}),
-	)
+
+	syncthingArgs := []string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose"}
+	if *verboseFlag {
+		syncthingArgs = append(syncthingArgs, "-verbose")
+	}
+	m.Add(monitor.NewProcess("syncthing", monitor.SyncthingBin, syncthingArgs))
 
 	if *remoteFlag {
 		m.Add(monitor.NewProcess("remote", "/var/okteto/bin/okteto-remote", nil))
