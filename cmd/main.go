@@ -45,7 +45,7 @@ func main() {
 
 	m := monitor.NewMonitor(ctx)
 
-	syncthingArgs := []string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384", "-verbose"}
+	syncthingArgs := []string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384"}
 	if *verboseFlag {
 		syncthingArgs = append(syncthingArgs, "-verbose")
 	}
