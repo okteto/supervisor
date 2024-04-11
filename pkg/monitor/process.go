@@ -191,7 +191,7 @@ func (p *Process) killAllByName() {
 		if err := terminate(proc); err != nil {
 			log.Infof("error terminating process %s with pid %d: %s", p.Name, proc.Pid, err.Error())
 		}
-		log.Infof("terminated process %s with pid %d", proc.Pid)
+		log.Infof("terminated process %s with pid %d", name, proc.Pid)
 	}
 
 	p.logger.Infof("process %s killed", p.Name)
