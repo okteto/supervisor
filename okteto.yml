@@ -1,17 +1,23 @@
-name: supervisor
-image: okteto/golang:1
-command:
-- bash
-workdir: /okteto
-volumes:
-- /go/pkg/
-- /root/.cache/go-build/
-securityContext:
-  capabilities:
-    add:
-    - SYS_PTRACE
-forward:
-- 8080:8080
-- 2345:2345
-persistentVolume:
-  enabled: true
+build:
+  supervisor:
+    context: .
+    image: ${REGISTRY_AND_USER:-okteto}/supervisor:${VERSION:-latest}
+dev:
+  supervisor:
+    image: okteto/golang:1
+    command:
+    - bash
+    workdir: /okteto
+    volumes:
+    - /go/pkg/
+    - /root/.cache/go-build/
+    securityContext:
+      capabilities:
+        add:
+        - SYS_PTRACE
+    forward:
+    - 8080:8080
+    - 2345:2345
+    persistentVolume:
+      enabled: true
+    autocreate: true
