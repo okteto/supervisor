@@ -9,12 +9,19 @@ import (
 	"syscall"
 
 	"github.com/okteto/supervisor/pkg/monitor"
+	"github.com/okteto/supervisor/pkg/setup"
 	reaper "github.com/ramr/go-reaper"
 	log "github.com/sirupsen/logrus"
 )
 
 // CommitString is the commit used to build the server
 var CommitString string
+
+const (
+	defaultSyncthingData   = "/var/syncthing/data"
+	defaultSyncthingConfig = "/var/syncthing"
+	defaultSyncthingSecret = "/var/syncthing/secret"
+)
 
 func main() {
 	log.WithField("commit", CommitString).Infof("supervisor started")
@@ -25,6 +32,7 @@ func main() {
 	remoteFlag := flag.Bool("remote", false, "start the remote server")
 	resetFlag := flag.Bool("reset", false, "reset syncthing database")
 	verboseFlag := flag.Bool("verbose", true, "syncthing verbosity")
+
 	flag.Parse()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -36,16 +44,20 @@ func main() {
 	}()
 
 	if *resetFlag {
-		cmd := exec.Command(monitor.SyncthingBin, "-home", "/var/syncthing", "-reset-database")
+		if err := setup.Setup(defaultSyncthingSecret, defaultSyncthingConfig); err != nil {
+			log.WithError(err).Error("error setting up syncthing")
+			os.Exit(1)
+		}
+		cmd := exec.Command(monitor.SyncthingBin, "-config", defaultSyncthingConfig, "-data", defaultSyncthingData, "-reset-database")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			log.WithError(err).Errorf("error resetting syncthing database: %s", output)
 		}
 	}
 
-	m := monitor.NewMonitor(ctx)
+	m := monitor.NewMonitor(ctx, monitor.NewSyncthingConfig(defaultSyncthingConfig, defaultSyncthingSecret, defaultSyncthingData))
 
-	syncthingArgs := []string{"-home", "/var/syncthing", "-gui-address", "0.0.0.0:8384"}
+	syncthingArgs := []string{"-config", defaultSyncthingConfig, "-data", defaultSyncthingData, "-gui-address", "0.0.0.0:8384"}
 	if *verboseFlag {
 		syncthingArgs = append(syncthingArgs, "-verbose")
 	}

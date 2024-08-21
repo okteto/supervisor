@@ -120,7 +120,9 @@ func (p *Process) shouldStart() bool {
 }
 
 func (p *Process) monitor() {
+	p.logger.Infof("monitoring process %s", p.Name)
 	<-p.cmd.Done()
+	p.logger.Infof("process %s done", p.Name)
 	if p.state == stopping {
 		return
 	}
