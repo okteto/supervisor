@@ -91,7 +91,7 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 		p.logger.Printf("starting %s for the first time", p.Name)
 		if p.Path == SyncthingBin {
 			if err := setup.Setup(m.syncthingConfig.secret, m.syncthingConfig.config); err != nil {
-				p.logger.Errorf("failed to setup %s: %w", p.Name, err)
+				p.logger.Errorf("failed to setup %s: %s", p.Name, err.Error())
 				m.err <- fmt.Errorf("failed to setup %s: %w", p.Name, err)
 				return
 			}
@@ -110,7 +110,7 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 		log.Infof("Restarting process %s", p.Name)
 		if p.Path == SyncthingBin {
 			if err := setup.Setup(m.syncthingConfig.secret, m.syncthingConfig.config); err != nil {
-				p.logger.Printf("failed to setup %s: %w", p.Name, err)
+				p.logger.Printf("failed to setup %s: %s", p.Name, err.Error())
 				m.err <- fmt.Errorf("failed to setup %s: %w", p.Name, err)
 				return
 			}
@@ -128,7 +128,7 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 		if p.Path == SyncthingBin {
 			log.Info("Resetting syncthing database after error...")
 			if err := setup.Setup(m.syncthingConfig.secret, m.syncthingConfig.config); err != nil {
-				p.logger.Errorf("failed to setup %s: %w", p.Name, err)
+				p.logger.Errorf("failed to setup %s: %s", p.Name, err.Error())
 				m.err <- fmt.Errorf("failed to setup %s: %w", p.Name, err)
 				return
 			}
