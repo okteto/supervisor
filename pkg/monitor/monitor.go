@@ -7,21 +7,40 @@ import (
 	"sync"
 	"time"
 
+	"github.com/okteto/supervisor/pkg/setup"
 	log "github.com/sirupsen/logrus"
 )
 
 // Monitor makes sure the list of processes is running
 type Monitor struct {
-	ps  []*Process
-	err chan error
-	ctx context.Context
+	ps              []*Process
+	err             chan error
+	ctx             context.Context
+	syncthingConfig SyncthingConfig
+}
+
+// SyncthingConfig represents the syncthing configuration
+type SyncthingConfig struct {
+	config string
+	data   string
+	secret string
+}
+
+// NewSyncthingConfig returns a new syncthing config
+func NewSyncthingConfig(config, secret, data string) SyncthingConfig {
+	return SyncthingConfig{
+		config: config,
+		data:   data,
+		secret: secret,
+	}
 }
 
 // NewMonitor returns an initialized monitor
-func NewMonitor(ctx context.Context) *Monitor {
+func NewMonitor(ctx context.Context, syncthingConfig SyncthingConfig) *Monitor {
 	return &Monitor{
-		ctx: ctx,
-		err: make(chan error, 1),
+		ctx:             ctx,
+		err:             make(chan error, 1),
+		syncthingConfig: syncthingConfig,
 	}
 }
 
@@ -69,10 +88,19 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 	defer wg.Done()
 	switch p.state {
 	case neverStarted:
-		log.Infof("starting %s for the first time", p.Name)
+		p.logger.Printf("starting %s for the first time", p.Name)
+		if p.Path == SyncthingBin {
+			if err := setup.Setup(m.syncthingConfig.secret, m.syncthingConfig.config); err != nil {
+				p.logger.Errorf("failed to setup %s: %s", p.Name, err.Error())
+				m.err <- fmt.Errorf("failed to setup %s: %w", p.Name, err)
+				return
+			}
+		}
 		p.start()
+		p.logger.Printf("%s started 1", p.Name)
 	case stopped:
 		if !p.shouldStart() {
+			log.Errorf("%s started %d times", p.Name, p.startCount)
 			m.err <- fmt.Errorf("%s started %d times", p.Name, p.startCount)
 			return
 		}
@@ -80,7 +108,15 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 		p.killAllByName()
 
 		log.Infof("Restarting process %s", p.Name)
+		if p.Path == SyncthingBin {
+			if err := setup.Setup(m.syncthingConfig.secret, m.syncthingConfig.config); err != nil {
+				p.logger.Printf("failed to setup %s: %s", p.Name, err.Error())
+				m.err <- fmt.Errorf("failed to setup %s: %w", p.Name, err)
+				return
+			}
+		}
 		p.start()
+		p.logger.Printf("%s started 2", p.Name)
 	case fatal:
 		if !p.shouldStart() {
 			m.err <- fmt.Errorf("%s started %d times", p.Name, p.startCount)
@@ -91,7 +127,12 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 
 		if p.Path == SyncthingBin {
 			log.Info("Resetting syncthing database after error...")
-			cmd := exec.Command(SyncthingBin, "-home", "/var/syncthing", "-reset-database")
+			if err := setup.Setup(m.syncthingConfig.secret, m.syncthingConfig.config); err != nil {
+				p.logger.Errorf("failed to setup %s: %s", p.Name, err.Error())
+				m.err <- fmt.Errorf("failed to setup %s: %w", p.Name, err)
+				return
+			}
+			cmd := exec.Command(SyncthingBin, "-config", m.syncthingConfig.config, "-data", m.syncthingConfig.data, "-reset-database")
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				log.WithError(err).Errorf("error resetting syncthing database: %s", output)
@@ -102,6 +143,7 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 
 		log.Errorf("Restarting process %s after failure", p.Name)
 		p.start()
+		p.logger.Printf("%s started 3", p.Name)
 	case started:
 		//do nothing
 	default:
