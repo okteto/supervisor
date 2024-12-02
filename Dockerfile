@@ -1,4 +1,4 @@
-FROM golang:1.22-bookworm AS builder
+FROM golang:1.22.9-bookworm AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ ARG COMMIT_SHA
 
 RUN make
 
-FROM busybox
+FROM busybox:1.37.0
 
 COPY --from=builder /app/supervisor /usr/local/bin/supervisor
 RUN chmod +x /usr/local/bin/supervisor
