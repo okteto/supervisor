@@ -132,7 +132,7 @@ func (m *Monitor) checkState(p *Process, wg *sync.WaitGroup) {
 				m.err <- fmt.Errorf("failed to setup %s: %w", p.Name, err)
 				return
 			}
-			cmd := exec.Command(SyncthingBin, "-config", m.syncthingConfig.config, "-data", m.syncthingConfig.data, "-reset-database")
+			cmd := exec.Command(SyncthingBin, "--config", m.syncthingConfig.config, "--data", m.syncthingConfig.data, "--reset-database")
 			output, err := cmd.CombinedOutput()
 			if err != nil {
 				log.WithError(err).Errorf("error resetting syncthing database: %s", output)
