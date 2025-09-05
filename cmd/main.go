@@ -48,7 +48,7 @@ func main() {
 			log.WithError(err).Error("error setting up syncthing")
 			os.Exit(1)
 		}
-		cmd := exec.Command(monitor.SyncthingBin, "-config", defaultSyncthingConfig, "-data", defaultSyncthingData, "-reset-database")
+		cmd := exec.Command(monitor.SyncthingBin, "--config", defaultSyncthingConfig, "--data", defaultSyncthingData, "--reset-database")
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			log.WithError(err).Errorf("error resetting syncthing database: %s", output)
@@ -57,9 +57,9 @@ func main() {
 
 	m := monitor.NewMonitor(ctx, monitor.NewSyncthingConfig(defaultSyncthingConfig, defaultSyncthingSecret, defaultSyncthingData))
 
-	syncthingArgs := []string{"-config", defaultSyncthingConfig, "-data", defaultSyncthingData, "-gui-address", "0.0.0.0:8384"}
+	syncthingArgs := []string{"--config", defaultSyncthingConfig, "--data", defaultSyncthingData, "--gui-address", "0.0.0.0:8384"}
 	if *verboseFlag {
-		syncthingArgs = append(syncthingArgs, "-verbose")
+		syncthingArgs = append(syncthingArgs, "--verbose")
 	}
 	m.Add(monitor.NewProcess("syncthing", monitor.SyncthingBin, syncthingArgs))
 
